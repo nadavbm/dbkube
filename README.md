@@ -2,7 +2,7 @@
 
 kubernetes operator built with [kubebuilder](https://book.kubebuilder.io/introduction.html)
 
-the operator will create cronjob by using crd inside a namespace
+the operator will create database service by using crd inside a namespace
 
 ### create a builder with kubebuilder
 
