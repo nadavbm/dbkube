@@ -1,0 +1,111 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - configmaps.etz.com
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - configmaps.etz.com
+  resources:
+  - configmaps/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - configmaps.etz.com
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - deployments.etz.com
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - deployments.etz.com
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - deployments.etz.com
+  resources:
+  - deployments/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - secrets.etz.com
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - secrets.etz.com
+  resources:
+  - secrets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - secrets.etz.com
+  resources:
+  - secrets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - services.etz.com
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - services.etz.com
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - services.etz.com
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update
