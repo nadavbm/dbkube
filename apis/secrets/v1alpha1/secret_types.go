@@ -28,8 +28,8 @@ type SecretSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Secret. Edit secret_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Database string `json:"database,omitempty"`
+	User     string `json:"user,omitempty"`
 }
 
 // SecretStatus defines the observed state of Secret

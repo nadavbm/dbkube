@@ -28,8 +28,22 @@ type ConfigMapSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of ConfigMap. Edit configmap_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	DatabaseServiceType string      `json:"databaseServiceType,omitempty"`
+	ConfigFileLocation  string      `json:"configFileLocation,omitempty"`
+	AuthFileLocation    string      `json:"authFileLocation,omitempty"`
+	DataDirectory       string      `json:"dataDirectory,omitempty"`
+	Port                int         `json:"port,omitempty"`
+	MaxConnections      int         `json:"maxConnections,omitempty"`
+	WhiteList           []WhiteList `json:"whitelist,omitempty"`
+}
+
+type WhiteList struct {
+	AllowedHostType string `json:"type,omitempty"`
+	AllowedDatabase string `json:"database,omitempty"`
+	AllowedUser     string `json:"user,omitempty"`
+	AllowedAddress  string `json:"address,omitempty"`
+	AllowedIpMask   string `json:"ipmask,omitempty"`
+	AllowedMethod   string `json:"method,omitempty"`
 }
 
 // ConfigMapStatus defines the observed state of ConfigMap
