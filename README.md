@@ -41,10 +41,10 @@ to test the operator, run minikube and the following commands:
 ```
 sh test/cleanup.sh 
 kubectl apply -f test/specs.yaml 
-kubectl apply -f test/testcrd.yaml
+kubectl apply -f test/test.yaml
 ```
 
 test crd changes with (connect to the relevant namespace with `kubens`):
 ```
-k edit jobs.cronjobs.example.com jobop
+k edit secrets.secrets.etz.com jobop
 ```
