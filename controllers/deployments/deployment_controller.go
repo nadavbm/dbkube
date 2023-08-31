@@ -18,17 +18,23 @@ package deployments
 
 import (
 	"context"
+	"time"
 
+	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	deploymentsv1alpha1 "github.com/nadavbm/dbkube/apis/deployments/v1alpha1"
+	"github.com/nadavbm/dbkube/pkg/kubetz"
+	"github.com/nadavbm/zlog"
 )
 
 // DeploymentReconciler reconciles a Deployment object
 type DeploymentReconciler struct {
+	Logger *zlog.Logger
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -47,9 +53,41 @@ type DeploymentReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := zlog.New()
+	r.Logger = logger
 
-	// TODO(user): your logic here
+	r.Logger.Info("Start reconcile", zap.String("namespace", req.NamespacedName.Namespace))
+
+	var resource deploymentsv1alpha1.Deployment
+	if err := r.Client.Get(context.Background(), req.NamespacedName, &resource); err != nil {
+		if errors.IsNotFound(err) {
+			r.Logger.Info("deployment resource is not found. skipping..", zap.String("namespace", req.Namespace))
+			return ctrl.Result{Requeue: false, RequeueAfter: 0}, nil
+		}
+		r.Logger.Error("could not fetch resource", zap.String("type", resource.Kind))
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Minute}, err
+	}
+
+	var object appsv1.Deployment
+	if err := r.Get(ctx, req.NamespacedName, &object); err != nil {
+		if errors.IsNotFound(err) {
+			r.Logger.Info("create deployment", zap.String("namespace", req.Namespace))
+			obj := kubetz.BuildDeployment(req.Namespace, &resource)
+			if err := r.Create(ctx, obj); err != nil {
+				r.Logger.Error("could not create", zap.String("object kind", obj.Kind))
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, nil
+		}
+
+		if err := r.Update(ctx, &object); err != nil {
+			if errors.IsInvalid(err) {
+				r.Logger.Error("invalid update", zap.String("object", object.Name))
+			} else {
+				r.Logger.Error("unable to update", zap.String("object", object.Name))
+			}
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -58,5 +96,6 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *DeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&deploymentsv1alpha1.Deployment{}).
+		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }
