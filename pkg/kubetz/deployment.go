@@ -68,11 +68,7 @@ func BuildDeployment(ns string, deploy *deployments.Deployment) *appsv1.Deployme
 									v1.ResourceCPU:    resource.MustParse(deploy.Spec.CpuRequest),
 								},
 							},
-							Env: []v1.EnvVar{
-								getEnvVarSecretSource("POSTGRES_DATABASE", "db-secret", "postgres_database"),
-								getEnvVarSecretSource("POSTGRES_USER", "db-secret", "postgres_user"),
-								getEnvVarSecretSource("POSTGRES_PASSWORD", "db-secret", "postgres_password"),
-							},
+							Env: getEnvVarsForSecret(deploy.Spec.ImageName),
 						},
 					},
 					RestartPolicy:                 v1.RestartPolicyAlways,
@@ -113,20 +109,6 @@ func buildLabels(name, app string) map[string]string {
 	m["app.kubernetes.io/name"] = name
 	m["app.kubernetes.io/component"] = name
 	return m
-}
-
-func getEnvVarSecretSource(envName, name, secret string) v1.EnvVar {
-	return v1.EnvVar{
-		Name: envName,
-		ValueFrom: &v1.EnvVarSource{
-			SecretKeyRef: &v1.SecretKeySelector{
-				LocalObjectReference: v1.LocalObjectReference{
-					Name: name,
-				},
-				Key: secret,
-			},
-		},
-	}
 }
 
 func getEnvVarConfigMapSource(configName, fileName string) v1.EnvVar {
