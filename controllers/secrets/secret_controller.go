@@ -18,17 +18,23 @@ package secrets
 
 import (
 	"context"
+	"time"
 
+	"go.uber.org/zap"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	secretsv1alpha1 "github.com/nadavbm/dbkube/apis/secrets/v1alpha1"
+	"github.com/nadavbm/dbkube/pkg/kubetz"
+	"github.com/nadavbm/zlog"
 )
 
 // SecretReconciler reconciles a Secret object
 type SecretReconciler struct {
+	Logger *zlog.Logger
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -47,9 +53,43 @@ type SecretReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *SecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := zlog.New()
+	r.Logger = logger
 
-	// TODO(user): your logic here
+	r.Logger.Info("Start reconcile", zap.String("namespace", req.NamespacedName.Namespace))
+
+	var resource secretsv1alpha1.Secret
+	if err := r.Client.Get(context.Background(), req.NamespacedName, &resource); err != nil {
+		if errors.IsNotFound(err) {
+			r.Logger.Info("secret resource is not found. skipping..", zap.String("namespace", req.Namespace))
+			return ctrl.Result{Requeue: false, RequeueAfter: 0}, nil
+		}
+		r.Logger.Error("could not fetch resource", zap.String("type", resource.Kind))
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Minute}, err
+	}
+
+	var object v1.Secret
+	if err := r.Get(ctx, req.NamespacedName, &object); err != nil {
+		if errors.IsNotFound(err) {
+			r.Logger.Info("create secret", zap.String("namespace", req.Namespace))
+			// TODO: only postgres service is currently configured. Extend the api to include type and
+			// build resource in kubetz package
+			obj := kubetz.BuildSecret(req.Namespace, "postgres", &resource)
+			if err := r.Create(ctx, obj); err != nil {
+				r.Logger.Error("could not create", zap.String("object kind", obj.Kind))
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, nil
+		}
+
+		if err := r.Update(ctx, &object); err != nil {
+			if errors.IsInvalid(err) {
+				r.Logger.Error("invalid update", zap.String("object", object.Name))
+			} else {
+				r.Logger.Error("unable to update", zap.String("object", object.Name))
+			}
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -58,5 +98,6 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 func (r *SecretReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&secretsv1alpha1.Secret{}).
+		Owns(&v1.Secret{}).
 		Complete(r)
 }
