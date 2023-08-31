@@ -28,8 +28,9 @@ type SecretSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Database string `json:"database,omitempty"`
-	User     string `json:"user,omitempty"`
+	DatabaseServiceType string `json:"databaseServiceType,omitempty"`
+	Database            string `json:"database,omitempty"`
+	User                string `json:"user,omitempty"`
 }
 
 // SecretStatus defines the observed state of Secret
