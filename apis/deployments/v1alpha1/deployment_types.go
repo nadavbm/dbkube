@@ -31,10 +31,10 @@ type DeploymentSpec struct {
 	ImageName     string `json:"imageName,omitempty"`
 	ImageVersion  string `json:"imageVersion,omitempty"`
 	ContainerPort int32  `json:"port,omitempty"`
-	CpuRequest    string `json:"cpu_req,omitempty"`
-	CpuLimit      string `json:"cpu_lim,omitempty"`
-	MemoryRequest string `json:"mem_req,omitempty"`
-	MemoryLimit   string `json:"mem_lim,omitempty"`
+	CpuRequest    string `json:"cpuRequests,omitempty"`
+	CpuLimit      string `json:"cpuLimits,omitempty"`
+	MemoryRequest string `json:"memoryRequests,omitempty"`
+	MemoryLimit   string `json:"memoryLimits,omitempty"`
 }
 
 // DeploymentStatus defines the observed state of Deployment

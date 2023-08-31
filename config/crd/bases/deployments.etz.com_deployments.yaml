@@ -35,17 +35,17 @@ spec:
           spec:
             description: DeploymentSpec defines the desired state of Deployment
             properties:
-              cpu_lim:
+              cpuLimits:
                 type: string
-              cpu_req:
+              cpuRequests:
                 type: string
               imageName:
                 type: string
               imageVersion:
                 type: string
-              mem_lim:
+              memoryLimits:
                 type: string
-              mem_req:
+              memoryRequests:
                 type: string
               port:
                 format: int32

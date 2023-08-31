@@ -11,10 +11,10 @@ metadata:
   name: pg-deploy
   namespace: pg-test
 spec:
-  cpu_lim: "200m"
-  cpu_req: "100m"
-  mem_lim: "256Mi"
-  mem_req: "128Mi"
+  cpuLimits: "200m"
+  cpuRequests: "100m"
+  memoryLimits: "256Mi"
+  memoryRequests: "128Mi"
   imageName: "postgres"
   imageVersion: "14"
   port: 5432
@@ -25,6 +25,7 @@ metadata:
   name: pg-secret
   namespace: pg-test
 spec:
+  databaseServiceType: postgres
   database: test
   user: test
 ---
@@ -46,5 +47,6 @@ metadata:
   name: pg-service
   namespace: pg-test
 spec:
+  databaseServiceType: postgres
   ports:
     - port: 5432
