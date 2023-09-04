@@ -69,14 +69,12 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	var object v1.Secret
+	obj := kubetz.BuildSecret(req.Namespace, &resource)
 	if err := r.Get(ctx, req.NamespacedName, &object); err != nil {
 		if errors.IsNotFound(err) {
-			r.Logger.Info("create secret", zap.String("namespace", req.Namespace))
-			// TODO: only postgres service is currently configured. Extend the api to include type and
-			// build resource in kubetz package
-			obj := kubetz.BuildSecret(req.Namespace, "postgres", &resource)
+			r.Logger.Info("create secret", zap.String("namespace", req.Namespace), zap.Error(err))
 			if err := r.Create(ctx, obj); err != nil {
-				r.Logger.Error("could not create", zap.String("object kind", obj.Kind))
+				r.Logger.Error("could not create", zap.String("object kind", obj.Kind), zap.Error(err))
 				return ctrl.Result{}, err
 			}
 			return ctrl.Result{}, nil
@@ -84,11 +82,14 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 		if err := r.Update(ctx, &object); err != nil {
 			if errors.IsInvalid(err) {
-				r.Logger.Error("invalid update", zap.String("object", object.Name))
+				r.Logger.Error("invalid update", zap.String("object", object.Name), zap.Error(err))
 			} else {
-				r.Logger.Error("unable to update", zap.String("object", object.Name))
+				r.Logger.Error("unable to update", zap.String("object", object.Name), zap.Error(err))
 			}
+			return ctrl.Result{}, nil
 		}
+
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	return ctrl.Result{}, nil
