@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	configmapsv1alpha1 "github.com/nadavbm/dbkube/apis/configmaps/v1alpha1"
+	"github.com/nadavbm/dbkube/pkg/debug"
 	"github.com/nadavbm/dbkube/pkg/kubetz"
 	"github.com/nadavbm/zlog"
 )
@@ -69,24 +70,27 @@ func (r *ConfigMapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	var object v1.ConfigMap
+	obj := kubetz.BuildConfigMap(req.Namespace, &resource)
 	if err := r.Get(ctx, req.NamespacedName, &object); err != nil {
 		if errors.IsNotFound(err) {
-			r.Logger.Info("create configmap", zap.String("namespace", req.Namespace))
-			obj := kubetz.BuildConfigMap(req.Namespace, &resource)
+			r.Logger.Info("create configmap", zap.String("namespace", req.Namespace), zap.Error(err))
 			if err := r.Create(ctx, obj); err != nil {
-				r.Logger.Error("could not create", zap.String("object kind", obj.Kind))
+				r.Logger.Error("could not create", zap.String("object kind", obj.Kind), zap.Error(err))
 				return ctrl.Result{}, err
 			}
-			return ctrl.Result{}, nil
 		}
 
 		if err := r.Update(ctx, &object); err != nil {
 			if errors.IsInvalid(err) {
-				r.Logger.Error("invalid update", zap.String("object", object.Name))
+				debug.Debug("error after update", err)
+				r.Logger.Error("invalid update", zap.String("object", object.Name), zap.Error(err))
 			} else {
-				r.Logger.Error("unable to update", zap.String("object", object.Name))
+				r.Logger.Error("unable to update", zap.String("object", object.Name), zap.Error(err))
 			}
+			return ctrl.Result{}, nil
 		}
+
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	return ctrl.Result{}, nil

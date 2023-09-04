@@ -41,10 +41,13 @@ to test the operator, run minikube and the following commands:
 ```
 sh test/cleanup.sh 
 kubectl apply -f test/specs.yaml 
-kubectl apply -f test/test.yaml
+kubectl apply -f test/mongodb.yaml
 ```
 
 test crd changes with (connect to the relevant namespace with `kubens`):
 ```
-k edit secrets.secrets.etz.com jobop
+k edit configmap.configmaps.etz.com mongo-cm
+k edit deployment.deployments.etz.com mongo-deploy
+k edit secrets.secrets.etz.com mongo-secret
+k edit service.services.etz.com mongo-service
 ```

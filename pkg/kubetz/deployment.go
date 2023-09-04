@@ -16,7 +16,7 @@ const numOfReplicas = 1
 
 // BuildDeployment creates a kubernetes deployment specification
 func BuildDeployment(ns string, deploy *deployments.Deployment) *appsv1.Deployment {
-	name := deploy.Spec.ImageName
+	name := deploy.Spec.ImageName + "-deploy"
 	// TODO: num of replicas should change according to plan (1 for single instance, 2 for master slave config and 3 for cluster)
 	// this plan require change in the apis and manifests
 	replicas := int32(numOfReplicas)
@@ -40,11 +40,11 @@ func BuildDeployment(ns string, deploy *deployments.Deployment) *appsv1.Deployme
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: buildLabels(app, name),
+				MatchLabels: buildLabels(name, app),
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: buildLabels(app, name),
+					Labels: buildLabels(name, app),
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{

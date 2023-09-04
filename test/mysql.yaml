@@ -32,7 +32,7 @@ spec:
 apiVersion: configmaps.etz.com/v1alpha1
 kind: ConfigMap
 metadata:
-  name: mysql-cm
+  name: mysql-config
   namespace: mysql-test
 spec:
   databaseServiceType: mysql

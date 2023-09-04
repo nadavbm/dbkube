@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	deploymentsv1alpha1 "github.com/nadavbm/dbkube/apis/deployments/v1alpha1"
+	"github.com/nadavbm/dbkube/pkg/debug"
 	"github.com/nadavbm/dbkube/pkg/kubetz"
 	"github.com/nadavbm/zlog"
 )
@@ -69,10 +70,10 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	var object appsv1.Deployment
+	obj := kubetz.BuildDeployment(req.Namespace, &resource)
 	if err := r.Get(ctx, req.NamespacedName, &object); err != nil {
 		if errors.IsNotFound(err) {
 			r.Logger.Info("create deployment", zap.String("namespace", req.Namespace))
-			obj := kubetz.BuildDeployment(req.Namespace, &resource)
 			if err := r.Create(ctx, obj); err != nil {
 				r.Logger.Error("could not create", zap.String("object kind", obj.Kind))
 				return ctrl.Result{}, err
@@ -82,11 +83,14 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		if err := r.Update(ctx, &object); err != nil {
 			if errors.IsInvalid(err) {
+				debug.Debug("error after update", err)
 				r.Logger.Error("invalid update", zap.String("object", object.Name))
 			} else {
 				r.Logger.Error("unable to update", zap.String("object", object.Name))
 			}
 		}
+
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	return ctrl.Result{}, nil
