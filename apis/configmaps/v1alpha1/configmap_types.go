@@ -72,7 +72,3 @@ type ConfigMapList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ConfigMap `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&ConfigMap{}, &ConfigMapList{})
-}

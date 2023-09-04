@@ -63,7 +63,3 @@ type DeploymentList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Deployment `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&Deployment{}, &DeploymentList{})
-}
