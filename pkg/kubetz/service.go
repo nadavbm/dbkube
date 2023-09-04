@@ -8,20 +8,49 @@ import (
 )
 
 // BuildService in kubernetes with pgDeploy port
-func BuildService(ns, app string, service *services.Service) *v1.Service {
-	name := "pg-service"
-	return &v1.Service{
+func BuildService(ns string, svc *services.Service) *v1.Service {
+	controller := true
+	ownerRef := []metav1.OwnerReference{
+		{
+			APIVersion: svc.APIVersion,
+			Kind:       svc.Kind,
+			Name:       svc.Name,
+			UID:        svc.UID,
+			Controller: &controller,
+		},
+	}
+
+	service := &v1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
 			APIVersion: "v1",
 		},
-		ObjectMeta: buildMetadata(name, ns, app, service.APIVersion, service.Kind, service.UID),
-		Spec: v1.ServiceSpec{
-			Type:     v1.ServiceTypeNodePort,
-			Ports:    buildServicePorts(service),
-			Selector: buildLabels(app, name),
-		},
 	}
+	switch {
+	case svc.Spec.DatabaseServiceType == "postgres":
+		service.ObjectMeta = buildObjectMetadata("postgres-service", ns, ownerRef)
+		service.Spec = v1.ServiceSpec{
+			Type:     v1.ServiceTypeNodePort,
+			Ports:    buildServicePorts(svc),
+			Selector: buildLabels("pg-service", "postgres"),
+		}
+	case svc.Spec.DatabaseServiceType == "mysql":
+		service.ObjectMeta = buildObjectMetadata("mysql-service", ns, ownerRef)
+		service.Spec = v1.ServiceSpec{
+			Type:     v1.ServiceTypeNodePort,
+			Ports:    buildServicePorts(svc),
+			Selector: buildLabels("mysql-service", "mysql"),
+		}
+	case svc.Spec.DatabaseServiceType == "mongo":
+		service.ObjectMeta = buildObjectMetadata("mongo-service", ns, ownerRef)
+		service.Spec = v1.ServiceSpec{
+			Type:     v1.ServiceTypeNodePort,
+			Ports:    buildServicePorts(svc),
+			Selector: buildLabels("mongodb-service", "mongodb"),
+		}
+	}
+
+	return service
 }
 
 //

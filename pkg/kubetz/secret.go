@@ -11,7 +11,18 @@ import (
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$&*"
 
-func BuildSecret(ns, app string, s *secrets.Secret) *v1.Secret {
+func BuildSecret(ns string, s *secrets.Secret) *v1.Secret {
+	controller := true
+	ownerRef := []metav1.OwnerReference{
+		{
+			APIVersion: s.APIVersion,
+			Kind:       s.Kind,
+			Name:       s.Name,
+			UID:        s.UID,
+			Controller: &controller,
+		},
+	}
+
 	secret := &v1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
@@ -19,22 +30,13 @@ func BuildSecret(ns, app string, s *secrets.Secret) *v1.Secret {
 		}}
 	switch {
 	case s.Spec.DatabaseServiceType == "postgres":
-		secret.ObjectMeta = metav1.ObjectMeta{
-			Name:      "postgres-secret",
-			Namespace: ns,
-		}
+		secret.ObjectMeta = buildObjectMetadata("postgres-secret", ns, ownerRef)
 		secret.StringData = createPostgresSecret(s)
 	case s.Spec.DatabaseServiceType == "mysql":
-		secret.ObjectMeta = metav1.ObjectMeta{
-			Name:      "mysql-secret",
-			Namespace: ns,
-		}
+		secret.ObjectMeta = buildObjectMetadata("mysql-secret", ns, ownerRef)
 		secret.StringData = createMySQLSecret(s)
 	case s.Spec.DatabaseServiceType == "mongo":
-		secret.ObjectMeta = metav1.ObjectMeta{
-			Name:      "mongo-secret",
-			Namespace: ns,
-		}
+		secret.ObjectMeta = buildObjectMetadata("mongo-secret", ns, ownerRef)
 		secret.StringData = createMongoDBSecret(s)
 	}
 
@@ -86,6 +88,23 @@ func getEnvVarSecretSource(envName, name, secret string) v1.EnvVar {
 //
 // ------------------------------------------------------------------------------ secret generator helpers -----------------------------------------------------------------------------
 //
+
+func buildSecretObjectMetadata(name, namespace string, s *secrets.Secret) metav1.ObjectMeta {
+	controller := true
+	return metav1.ObjectMeta{
+		Name:      name,
+		Namespace: namespace,
+		OwnerReferences: []metav1.OwnerReference{
+			{
+				APIVersion: s.APIVersion,
+				Kind:       s.Kind,
+				Name:       name,
+				UID:        s.UID,
+				Controller: &controller,
+			},
+		},
+	}
+}
 
 func createPostgresSecret(secret *secrets.Secret) map[string]string {
 	m := make(map[string]string)
