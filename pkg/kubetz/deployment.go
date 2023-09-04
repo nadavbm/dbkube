@@ -7,7 +7,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	deployments "github.com/nadavbm/dbkube/apis/deployments/v1alpha1"
 )
@@ -16,36 +15,29 @@ const numOfReplicas = 1
 
 // BuildDeployment creates a kubernetes deployment specification
 func BuildDeployment(ns string, deploy *deployments.Deployment) *appsv1.Deployment {
+	controller := true
+	ownerRef := []metav1.OwnerReference{
+		{
+			APIVersion: deploy.APIVersion,
+			Kind:       deploy.Kind,
+			Name:       deploy.Name,
+			UID:        deploy.UID,
+			Controller: &controller,
+		},
+	}
+
 	name := deploy.Spec.ImageName + "-deploy"
 	// TODO: num of replicas should change according to plan (1 for single instance, 2 for master slave config and 3 for cluster)
 	// this plan require change in the apis and manifests
 	replicas := int32(numOfReplicas)
-
-	var app string
-
-	switch {
-	case strings.Contains(deploy.Spec.ImageName, "postgres"):
-		app = "postgres"
-	case strings.Contains(deploy.Spec.ImageName, "mysql"):
-		app = "mysql"
-	case strings.Contains(deploy.Spec.ImageName, "mongo"):
-		app = "mongodb"
-	}
-
-	return &appsv1.Deployment{
+	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: ns,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: buildLabels(name, app),
-			},
 			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: buildLabels(name, app),
-				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
 						{
@@ -79,37 +71,40 @@ func BuildDeployment(ns string, deploy *deployments.Deployment) *appsv1.Deployme
 			},
 		},
 	}
+
+	switch {
+	case strings.Contains(deploy.Spec.ImageName, "postgres"):
+		deployment.ObjectMeta = buildObjectMetadata("postgres-deploy", ns, ownerRef)
+		deployment.Spec.Selector = &metav1.LabelSelector{
+			MatchLabels: buildLabels("postgres-deploy", "postgres"),
+		}
+		deployment.Spec.Template.ObjectMeta = metav1.ObjectMeta{
+			Labels: buildLabels("postgres-deploy", "postgres"),
+		}
+	case strings.Contains(deploy.Spec.ImageName, "mysql"):
+		deployment.ObjectMeta = buildObjectMetadata("mysql-deploy", ns, ownerRef)
+		deployment.Spec.Selector = &metav1.LabelSelector{
+			MatchLabels: buildLabels("mysql-deploy", "mysql"),
+		}
+		deployment.Spec.Template.ObjectMeta = metav1.ObjectMeta{
+			Labels: buildLabels("mysql-deploy", "mysql"),
+		}
+	case strings.Contains(deploy.Spec.ImageName, "mongo"):
+		deployment.ObjectMeta = buildObjectMetadata("mongo-deploy", ns, ownerRef)
+		deployment.Spec.Selector = &metav1.LabelSelector{
+			MatchLabels: buildLabels("mongo-deploy", "mongo"),
+		}
+		deployment.Spec.Template.ObjectMeta = metav1.ObjectMeta{
+			Labels: buildLabels("mongo-deploy", "mongo"),
+		}
+	}
+
+	return deployment
 }
 
 //
 // ------------------------------------------------------------------------------------------------------- helpers -----------------------------------------------------------------------------
 //
-
-func buildMetadata(name, namespace, app, apiVersion, kind string, uid types.UID) metav1.ObjectMeta {
-	controlled := true
-	return metav1.ObjectMeta{
-		Name:      name,
-		Namespace: namespace,
-		Labels:    buildLabels(name, app),
-		OwnerReferences: []metav1.OwnerReference{
-			{
-				APIVersion: apiVersion,
-				Kind:       kind,
-				Name:       name,
-				UID:        uid,
-				Controller: &controlled,
-			},
-		},
-	}
-}
-
-func buildLabels(name, app string) map[string]string {
-	m := make(map[string]string)
-	m["app"] = app
-	m["app.kubernetes.io/name"] = name
-	m["app.kubernetes.io/component"] = name
-	return m
-}
 
 func getEnvVarConfigMapSource(configName, fileName string) v1.EnvVar {
 	return v1.EnvVar{
