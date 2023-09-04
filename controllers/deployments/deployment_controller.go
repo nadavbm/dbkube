@@ -88,6 +88,7 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			} else {
 				r.Logger.Error("unable to update", zap.String("object", object.Name))
 			}
+			return ctrl.Result{}, nil
 		}
 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
