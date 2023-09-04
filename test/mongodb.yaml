@@ -31,7 +31,7 @@ spec:
 apiVersion: configmaps.etz.com/v1alpha1
 kind: ConfigMap
 metadata:
-  name: mongo-cm
+  name: mongo-config
   namespace: mongodb-test
 spec:
   databaseServiceType: mongo

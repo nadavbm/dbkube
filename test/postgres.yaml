@@ -8,7 +8,7 @@ metadata:
 apiVersion: deployments.etz.com/v1alpha1
 kind: Deployment
 metadata:
-  name: pg-deploy
+  name: postgres-deploy
   namespace: pg-test
 spec:
   cpuLimits: "200m"
@@ -22,7 +22,7 @@ spec:
 apiVersion: secrets.etz.com/v1alpha1
 kind: Secret
 metadata:
-  name: pg-secret
+  name: postgres-secret
   namespace: pg-test
 spec:
   databaseServiceType: postgres
@@ -32,7 +32,7 @@ spec:
 apiVersion: configmaps.etz.com/v1alpha1
 kind: ConfigMap
 metadata:
-  name: pg-cm
+  name: postgres-config
   namespace: pg-test
 spec:
   databaseServiceType: postgres
@@ -44,7 +44,7 @@ spec:
 apiVersion: services.etz.com/v1alpha1
 kind: Service
 metadata:
-  name: pg-service
+  name: postgres-service
   namespace: pg-test
 spec:
   databaseServiceType: postgres

@@ -167,17 +167,17 @@ spec:
           spec:
             description: DeploymentSpec defines the desired state of Deployment
             properties:
-              cpu_lim:
+              cpuLimits:
                 type: string
-              cpu_req:
+              cpuRequests:
                 type: string
               imageName:
                 type: string
               imageVersion:
                 type: string
-              mem_lim:
+              memoryLimits:
                 type: string
-              mem_req:
+              memoryRequests:
                 type: string
               port:
                 format: int32
@@ -230,6 +230,8 @@ spec:
             properties:
               database:
                 type: string
+              databaseServiceType:
+                type: string
               user:
                 type: string
             type: object
@@ -278,9 +280,11 @@ spec:
           spec:
             description: ServiceSpec defines the desired state of Service
             properties:
-              ports:
+              databaseServiceType:
                 description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                   Important: Run "make" to regenerate code after modifying this file'
+                type: string
+              ports:
                 items:
                   properties:
                     name:
